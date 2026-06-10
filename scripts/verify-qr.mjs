@@ -13,7 +13,7 @@ const expected = [
   'EUR1365.00',
   'TAXS',
   '',
-  'StNr. 12 345/6789 / U 04/2026',
+  '123456789 2604+136500U',
 ].join('\n')
 
 const buf = await QRCode.toBuffer(expected, { errorCorrectionLevel: 'M', margin: 3, width: 288 })

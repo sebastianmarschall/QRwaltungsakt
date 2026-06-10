@@ -96,12 +96,6 @@ export function parsePayment(lines: string[]): ParsedPayment {
   const taxItems = findTaxItems(lines)
   const amountCents = findAmount(lines, taxItems, warnings)
 
-  const remittanceParts: string[] = []
-  if (taxNumber) remittanceParts.push(`StNr. ${taxNumber}`)
-  for (const item of taxItems) {
-    remittanceParts.push(`${item.code} ${formatTaxPeriod(item.period)}`)
-  }
-
   return {
     recipientName,
     recipientIban,
@@ -109,9 +103,38 @@ export function parsePayment(lines: string[]): ParsedPayment {
     amountCents,
     taxNumber,
     taxItems,
-    remittanceSuggestion: remittanceParts.length ? remittanceParts.join(' / ') : undefined,
+    remittanceSuggestion: buildRemittance(taxNumber, taxItems),
     warnings,
   }
+}
+
+/**
+ * Prefers the machine-readable "Finanzamtszahlung" remittance grammar that
+ * banks themselves write for tax payments – tax number, then one segment of
+ * YYMM+amount-in-cents+tax-code per position (e.g. "083226340 2604+136500U").
+ * Banking apps like George parse it back into labelled positions. Falls back
+ * to a human-readable form when any piece needed for the grammar is missing.
+ */
+function buildRemittance(taxNumber: string | undefined, taxItems: TaxItem[]): string | undefined {
+  const structured =
+    taxNumber &&
+    taxItems.length > 0 &&
+    taxItems.every((i) => i.amountCents !== undefined && /^\d{2}\d{4}$/.test(i.period))
+  if (structured) {
+    const stnr = taxNumber.replace(/[\s/]/g, '')
+    const segments = taxItems.map((i) => {
+      const [, mm, yyyy] = /^(\d{2})(\d{4})$/.exec(i.period)!
+      return `${yyyy.slice(2)}${mm}+${i.amountCents}${i.code}`
+    })
+    return [stnr, ...segments].join(' ')
+  }
+
+  const parts: string[] = []
+  if (taxNumber) parts.push(`StNr. ${taxNumber}`)
+  for (const item of taxItems) {
+    parts.push(`${item.code} ${formatTaxPeriod(item.period)}`)
+  }
+  return parts.length ? parts.join(' / ') : undefined
 }
 
 /**

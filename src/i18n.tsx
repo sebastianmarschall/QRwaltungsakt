@@ -21,7 +21,7 @@ const STRINGS = {
     fieldAmount: 'Betrag (EUR)',
     fieldRemittance: 'Verwendungszweck',
     remittanceHint:
-      'Steuernummer, Abgabenart und Zeitraum – so kann das Finanzamt die Zahlung zuordnen.',
+      'Finanzamts-Format: Steuernummer, dann Zeitraum (JJMM)+Betrag in Cent+Abgabenart. Banking-Apps zeigen das als benannte Position an.',
     taxDetected: 'Erkannt',
     errRequired: 'Pflichtfeld',
     errIban: 'Ungültige IBAN (Prüfsumme)',
@@ -65,7 +65,7 @@ const STRINGS = {
     fieldAmount: 'Amount (EUR)',
     fieldRemittance: 'Payment reference',
     remittanceHint:
-      'Tax number, tax type and period – this is how the Finanzamt allocates your payment.',
+      'Finanzamt grammar: tax number, then period (YYMM)+amount in cents+tax code. Banking apps render this as a labelled position.',
     taxDetected: 'Detected',
     errRequired: 'Required',
     errIban: 'Invalid IBAN (checksum)',

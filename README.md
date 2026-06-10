@@ -55,9 +55,15 @@ npm run preview  # Build lokal serven
    Abgabenart (`U` = Umsatzsteuer, …), Zeitraum und Betrag inkl. Quervergleich
    mit der OCR-Kontrollzeile.
 2. **EPC-Payload** (`src/lib/epc.ts`): Version 002, UTF-8, Fehlerkorrektur M.
-   Steuernummer und Abgabenart wandern in den unstrukturierten
-   Verwendungszweck (`StNr. … / U 04/2026`), damit das Finanzamt die Zahlung
-   zuordnen kann.
+   Der Verwendungszweck nutzt die maschinenlesbare
+   Finanzamtszahlungs-Grammatik – Steuernummer, dann pro Position
+   `JJMM+Betrag in Cent+Abgabenart` (z. B. `083226340 2604+136500U`), wie sie
+   Banken bei echten Finanzamtszahlungen selbst schreiben. Banking-Apps wie
+   George parsen das zurück in benannte Positionen ("Umsatzsteuer (U) …").
+   Fehlt eine Angabe dafür, fällt FA2QR auf die menschenlesbare Form
+   (`StNr. … / U 04/2026`) zurück. Hinweis: Die SEPA-End-to-End-Referenz, in
+   der die Steuernummer bei nativen Finanzamtszahlungen zusätzlich reist, ist
+   per EPC-QR-Code nicht setzbar.
 3. **Editierbares Formular:** Alle erkannten Werte lassen sich vor dem
    Scannen prüfen und korrigieren. Bei Unklarheiten warnt die App, statt
    stillschweigend zu raten.
