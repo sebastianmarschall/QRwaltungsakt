@@ -5,9 +5,9 @@
 
 [![CI & Deploy](https://github.com/sebastianmarschall/QRwaltungsakt/actions/workflows/deploy.yml/badge.svg)](https://github.com/sebastianmarschall/QRwaltungsakt/actions/workflows/deploy.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![App](https://img.shields.io/badge/App-online-4f46e5)](https://sebastianmarschall.github.io/QRwaltungsakt/)
+[![App](https://img.shields.io/badge/App-online-4f46e5)](https://qrwaltungsakt.at/)
 
-**▶ App öffnen: [sebastianmarschall.github.io/QRwaltungsakt](https://sebastianmarschall.github.io/QRwaltungsakt/)**
+**▶ App öffnen: [qrwaltungsakt.at](https://qrwaltungsakt.at/)**
 
 ![QRwaltungsakt: geparster Zahlschein mit editierbarem Formular und EPC-QR-Code](docs/screenshot.png)
 
@@ -39,9 +39,9 @@ versprochen:
   ```bash
   git clone https://github.com/sebastianmarschall/QRwaltungsakt && cd QRwaltungsakt
   npm ci
-  BASE_PATH=/QRwaltungsakt/ npm run build
+  npm run build
   # z. B. das gelieferte JS-Bundle mit dem lokalen vergleichen:
-  curl -s https://sebastianmarschall.github.io/QRwaltungsakt/assets/$(ls dist/assets | grep '^index-.*\.js$') \
+  curl -s https://qrwaltungsakt.at/assets/$(ls dist/assets | grep '^index-.*\.js$') \
     | diff - dist/assets/$(ls dist/assets | grep '^index-.*\.js$') && echo "identisch ✓"
   ```
 
