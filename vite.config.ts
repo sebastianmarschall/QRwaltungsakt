@@ -12,8 +12,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'FA2QR – Finanzamt-Zahlschein zu QR-Code',
-        short_name: 'FA2QR',
+        name: 'QRwaltungsakt – Finanzamt-Zahlschein zu QR-Code',
+        short_name: 'QRwaltungsakt',
         description:
           'Wandelt Zahlungsanweisungen des Finanzamts lokal im Browser in EPC-QR-Codes für Banking-Apps um. Keine Daten verlassen dein Gerät.',
         theme_color: '#0f172b',

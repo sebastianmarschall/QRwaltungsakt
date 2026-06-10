@@ -57,7 +57,7 @@ export function QrPanel({ payload, summary }: Props) {
           <div className="flex gap-2">
             <a
               href={pngUrl}
-              download="fa2qr-zahlung.png"
+              download="qrwaltungsakt-zahlung.png"
               className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-500 active:bg-indigo-700"
             >
               {t('download')}
