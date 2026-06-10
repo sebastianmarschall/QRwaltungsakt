@@ -3,6 +3,8 @@
 **Die Zahlungsanweisungsabtippvermeidungsmaschine.**
 *(Finanzamt-Zahlschein → QR-Code für deine Banking-App.)*
 
+**▶ App öffnen: [sebastianmarschall.github.io/QRwaltungsakt](https://sebastianmarschall.github.io/QRwaltungsakt/)**
+
 Zahlungsanweisungen des österreichischen Finanzamts kommen als PDF. QRwaltungsakt liest
 Empfänger, IBAN, Betrag, Steuernummer und Abgabenart aus der PDF und erzeugt
 daraus einen [EPC-QR-Code](https://de.wikipedia.org/wiki/EPC-QR-Code)
