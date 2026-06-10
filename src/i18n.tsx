@@ -4,7 +4,7 @@ export type Lang = 'de' | 'en'
 
 const STRINGS = {
   de: {
-    tagline: 'Finanzamt-Zahlschein → QR-Code für deine Banking-App',
+    tagline: 'Die Zahlungsanweisungsabtippvermeidungsmaschine.',
     dropTitle: 'Zahlungsanweisung hier ablegen',
     dropHint: 'PDF vom Finanzamt Österreich – oder klicken, um eine Datei auszuwählen',
     dropActive: 'Loslassen zum Einlesen',
@@ -48,7 +48,7 @@ const STRINGS = {
     footer: 'Open Source · keine Datenübertragung · funktioniert offline',
   },
   en: {
-    tagline: 'Austrian tax office payment slip → QR code for your banking app',
+    tagline: 'The Zahlungsanweisungsabtippvermeidungsmaschine. Yes, that is one word.',
     dropTitle: 'Drop your payment slip here',
     dropHint: 'PDF from the Austrian tax office – or click to choose a file',
     dropActive: 'Release to parse',
@@ -103,12 +103,12 @@ const I18nContext = createContext<I18n | null>(null)
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(() => {
-    const stored = localStorage.getItem('fa2qr-lang')
+    const stored = localStorage.getItem('qrwaltungsakt-lang')
     if (stored === 'de' || stored === 'en') return stored
     return navigator.language.startsWith('de') ? 'de' : 'en'
   })
   const setLang = (next: Lang) => {
-    localStorage.setItem('fa2qr-lang', next)
+    localStorage.setItem('qrwaltungsakt-lang', next)
     setLangState(next)
   }
   const t = (key: StringKey) => STRINGS[lang][key]

@@ -1,8 +1,9 @@
-# FA2QR
+# QRwaltungsakt
 
-**Finanzamt-Zahlschein → QR-Code für deine Banking-App.**
+**Die Zahlungsanweisungsabtippvermeidungsmaschine.**
+*(Finanzamt-Zahlschein → QR-Code für deine Banking-App.)*
 
-Zahlungsanweisungen des österreichischen Finanzamts kommen als PDF. FA2QR liest
+Zahlungsanweisungen des österreichischen Finanzamts kommen als PDF. QRwaltungsakt liest
 Empfänger, IBAN, Betrag, Steuernummer und Abgabenart aus der PDF und erzeugt
 daraus einen [EPC-QR-Code](https://de.wikipedia.org/wiki/EPC-QR-Code)
 ("GiroCode"), den österreichische Banking-Apps (George, ELBA, easybank, …)
@@ -13,13 +14,13 @@ direkt scannen. Kein Abtippen mehr.
 **Deine Daten verlassen nie dein Gerät.** Das ist überprüfbar, nicht nur
 versprochen:
 
-- **Kein Server.** FA2QR ist eine statische Web-App. Die PDF wird mit einer
+- **Kein Server.** QRwaltungsakt ist eine statische Web-App. Die PDF wird mit einer
   lokal gebündelten Kopie von [pdf.js](https://mozilla.github.io/pdf.js/)
   direkt im Browser gelesen.
 - **Strikte Content-Security-Policy.** Die App *darf* keine Verbindungen zu
   fremden Servern aufbauen (`connect-src 'self'`, kein CDN, keine externen
   Fonts, kein Tracking). Siehe `index.html`.
-- **Funktioniert offline.** FA2QR ist eine installierbare PWA. Einmal geladen,
+- **Funktioniert offline.** QRwaltungsakt ist eine installierbare PWA. Einmal geladen,
   kannst du das Internet ausschalten – die App funktioniert weiter.
 - **Open Source.** Der gesamte Code liegt in diesem Repository. Der
   Netzwerk-Tab in den DevTools bleibt nach dem Laden leer.
@@ -64,7 +65,7 @@ npm run preview  # Build lokal serven
    `JJMM+Betrag in Cent+Abgabenart` (z. B. `123456789 2604+136500U`), wie sie
    Banken bei echten Finanzamtszahlungen selbst schreiben. Banking-Apps wie
    George parsen das zurück in benannte Positionen ("Umsatzsteuer (U) …").
-   Fehlt eine Angabe dafür, fällt FA2QR auf die menschenlesbare Form
+   Fehlt eine Angabe dafür, fällt QRwaltungsakt auf die menschenlesbare Form
    (`StNr. … / U 04/2026`) zurück. Hinweis: Die SEPA-End-to-End-Referenz, in
    der die Steuernummer bei nativen Finanzamtszahlungen zusätzlich reist, ist
    per EPC-QR-Code nicht setzbar.

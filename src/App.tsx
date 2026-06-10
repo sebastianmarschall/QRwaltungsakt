@@ -74,8 +74,10 @@ export default function App() {
             QR
           </div>
           <div>
-            <h1 className="text-lg leading-tight font-bold tracking-tight">FA2QR</h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{t('tagline')}</p>
+            <h1 className="text-lg leading-tight font-bold tracking-tight">QRwaltungsakt</h1>
+            <p className="text-xs break-words text-slate-500 italic dark:text-slate-400">
+              {t('tagline')}
+            </p>
           </div>
         </div>
         <button
