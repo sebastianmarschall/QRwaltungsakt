@@ -26,7 +26,9 @@ export function centsToEpcAmount(cents: number): string {
 
 /** Display formatting: 136500 → "1.365,00" (de) / "1,365.00" (en). */
 export function centsToDisplay(cents: number, lang: 'de' | 'en'): string {
-  return (cents / 100).toLocaleString(lang === 'de' ? 'de-AT' : 'en-IE', {
+  // de-DE, not de-AT: Austrian CLDR groups with narrow spaces ("1 365,00"),
+  // but Zahlscheine and banking apps print the dot form ("1.365,00")
+  return (cents / 100).toLocaleString(lang === 'de' ? 'de-DE' : 'en-IE', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })
