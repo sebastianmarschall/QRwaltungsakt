@@ -7,7 +7,7 @@ const sample: EpcInput = {
   bic: 'BUNDATWWXXX',
   amountCents: 136500,
   purpose: 'TAXS',
-  remittance: 'StNr. 12 345/6789 / U 04/2026',
+  remittance: '123456789 2604+136500U',
 }
 
 describe('buildEpcPayload', () => {
@@ -24,7 +24,7 @@ describe('buildEpcPayload', () => {
         'EUR1365.00',
         'TAXS',
         '',
-        'StNr. 12 345/6789 / U 04/2026',
+        '123456789 2604+136500U',
       ].join('\n'),
     )
   })

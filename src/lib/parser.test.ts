@@ -35,7 +35,14 @@ describe('parsePayment', () => {
     expect(result.taxItems).toEqual([{ code: 'U', period: '042026', amountCents: 136500 }])
   })
 
-  it('suggests a Verwendungszweck the Finanzamt can allocate', () => {
+  it('suggests the machine-readable Finanzamtszahlung remittance', () => {
+    // tax number, then YYMM+cents+code per position – the grammar banking
+    // apps (George) parse back into labelled positions
+    expect(result.remittanceSuggestion).toBe('123456789 2604+136500U')
+  })
+
+  it('falls back to a human-readable remittance when the amount is missing', () => {
+    const result = parsePayment(['StNr: 12 345/6789', 'U 042026', 'AT360100000005504082'])
     expect(result.remittanceSuggestion).toBe('StNr. 12 345/6789 / U 04/2026')
   })
 
@@ -71,7 +78,7 @@ describe.runIf(existsSync('/tmp/items.json'))('parsePayment (real PDF, local onl
     expect(result.amountCents).toBe(136500)
     // pattern-matched so the real tax number never lands in the repo
     expect(result.taxNumber).toMatch(/^\d{2} \d{3}\/\d{4}$/)
-    expect(result.remittanceSuggestion).toMatch(/^StNr\. \d{2} \d{3}\/\d{4} \/ U 04\/2026$/)
+    expect(result.remittanceSuggestion).toMatch(/^\d{9} 2604\+136500U$/)
     expect(result.warnings).toEqual([])
   })
 })
