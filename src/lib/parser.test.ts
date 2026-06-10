@@ -60,6 +60,21 @@ describe('parsePayment degradation', () => {
     expect(result.warnings).toContain('noTaxNumber')
   })
 
+  it('parses year-only and quarter-range periods (official period formats)', () => {
+    // EZ (Aussetzungszinsen) uses JJJJ, E (Einkommensteuer) is quarterly
+    const yearOnly = parsePayment(['StNr: 12 345/6789', 'EZ 2026 50,00'])
+    expect(yearOnly.taxItems).toEqual([{ code: 'EZ', period: '2026', amountCents: 5000 }])
+    // no YYMM grammar possible for a year-only period → human-readable fallback
+    expect(yearOnly.remittanceSuggestion).toBe('StNr. 12 345/6789 / EZ 2026')
+
+    const quarter = parsePayment(['E 01-032026 300,00'])
+    expect(quarter.taxItems).toEqual([{ code: 'E', period: '01-032026', amountCents: 30000 }])
+  })
+
+  it('rejects six-digit "periods" with impossible months', () => {
+    expect(parsePayment(['U 136500 99,00']).taxItems).toEqual([])
+  })
+
   it('falls back to the Finanzamt BLZ pattern when no BIC is printed', () => {
     const result = parsePayment(['AT360100000005504082', 'AT792011100012345678'])
     expect(result.recipientIban).toBe('AT360100000005504082')

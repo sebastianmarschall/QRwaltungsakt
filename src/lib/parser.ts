@@ -66,8 +66,12 @@ export function reconstructLines(items: TextItem[], yTolerance = 2): string[] {
 const IBAN_SQUASHED_RE = /AT\d{18}(?!\d)/g
 // BIC with Austrian country code; lookarounds instead of \b so it matches in squashed text.
 const BIC_SQUASHED_RE = /(?<![A-Z])[A-Z]{4}AT[A-Z0-9]{2}(?:[A-Z0-9]{3})?(?![A-Z])/g
-// amounts appear with ("1.365,00") or without ("1365,00") thousands separator
-const TAX_LINE_RE = /\b([A-Z]{1,4})\s+(\d{6})\b(?:\s+((?:\d{1,3}(?:\.\d{3})+|\d+),\d{2}))?/g
+// Official codes are 1-3 letters; periods appear as MMJJJJ ("042026"),
+// quarter ranges ("01-032026"), or year only ("2026") depending on the
+// Abgabenart. Amounts appear with ("1.365,00") or without ("1365,00")
+// thousands separator.
+const TAX_LINE_RE =
+  /\b([A-Z]{1,3})\s+(\d{2}-\d{2}\/?\d{4}|\d{6}|(?:19|20)\d{2})\b(?:\s+((?:\d{1,3}(?:\.\d{3})+|\d+),\d{2}))?/g
 const AMOUNT_RE = /(?<![\d,.])((?:\d{1,3}(?:\.\d{3})+|\d+),\d{2})(?![\d,])/g
 /** OCR control line at the bottom of the slip, amount in cents: "00000136500<" */
 const CONTROL_RE = /(?<!\d[,.])0*(\d{1,12})</
@@ -223,6 +227,9 @@ function findTaxItems(lines: string[]): TaxItem[] {
     for (const m of line.matchAll(TAX_LINE_RE)) {
       const [, code, period, amount] = m
       if (!isKnownTaxCode(code)) continue
+      // 6-digit periods are MMJJJJ – reject impossible months ("136500" etc.)
+      const month = /^(\d{2})\d{4}$/.exec(period)?.[1]
+      if (month !== undefined && (Number(month) < 1 || Number(month) > 12)) continue
       const key = `${code} ${period}`
       const amountCents = amount ? (parseAmountToCents(amount) ?? undefined) : undefined
       const existing = seen.get(key)

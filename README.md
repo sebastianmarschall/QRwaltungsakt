@@ -40,9 +40,13 @@ npm run preview  # Build lokal serven
   Zahlscheins und den EPC-Payload gegen ein Golden Sample.
 - `node scripts/verify-qr.mjs` rendert den QR-Code und decodiert ihn mit einem
   unabhängigen Decoder (jsQR) – Payload-Vergleich Byte für Byte.
-- `node scripts/extract-fixture.mjs` extrahiert Text-Items aus einer echten
-  PDF (Pfad im Script anpassen). Echte PDFs sind via `.gitignore` vom Repo
-  ausgeschlossen, sie enthalten persönliche Daten.
+- `node scripts/extract-fixture.mjs <pdf>` extrahiert Text-Items aus einer
+  echten PDF. Echte PDFs sind via `.gitignore` vom Repo ausgeschlossen, sie
+  enthalten persönliche Daten.
+- `node scripts/generate-tax-codes.mjs <xlsx>` regeneriert
+  `src/lib/taxCodes.ts` aus dem offiziellen BMF
+  "Verzeichnis der Abgabenarten" (bmf.gv.at) – aktuell 187 Codes inkl.
+  Zeitraumformat (MM/JJJJ, KVJ, JJJJ, …).
 
 ## Wie es funktioniert
 
