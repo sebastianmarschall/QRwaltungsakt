@@ -4,6 +4,7 @@
 *(Finanzamt-Zahlschein → QR-Code für deine Banking-App.)*
 
 [![CI & Deploy](https://github.com/sebastianmarschall/QRwaltungsakt/actions/workflows/deploy.yml/badge.svg)](https://github.com/sebastianmarschall/QRwaltungsakt/actions/workflows/deploy.yml)
+[![CodeQL](https://github.com/sebastianmarschall/QRwaltungsakt/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/sebastianmarschall/QRwaltungsakt/security/code-scanning)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![App](https://img.shields.io/badge/App-online-4f46e5)](https://qrwaltungsakt.at/)
 
