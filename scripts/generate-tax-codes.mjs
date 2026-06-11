@@ -15,15 +15,19 @@ if (!xlsxPath) {
 const tmp = mkdtempSync(join(tmpdir(), 'abgabenarten-'))
 execSync(`unzip -o -q ${JSON.stringify(xlsxPath)} -d ${JSON.stringify(tmp)}`)
 
-const decode = (s) =>
-  s
-    .replace(/<[^>]+>/g, '')
-    .replace(/&amp;/g, '&')
+const decode = (s) => {
+  // strip XML tags to a fixpoint, then decode entities – &amp; strictly last,
+  // otherwise "&amp;lt;" would double-unescape to "<"
+  let out = s
+  while (/<[^>]*>/.test(out)) out = out.replace(/<[^>]*>/g, '')
+  return out
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&#(\d+);/g, (_, d) => String.fromCharCode(d))
+    .replace(/&amp;/g, '&')
     .trim()
+}
 
 const ss = readFileSync(join(tmp, 'xl/sharedStrings.xml'), 'utf8')
 const strings = [...ss.matchAll(/<si>(.*?)<\/si>/gs)].map((m) => decode(m[1]))
