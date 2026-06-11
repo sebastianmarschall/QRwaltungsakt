@@ -38,6 +38,11 @@ const STRINGS = {
       'Die Beträge auf dem Zahlschein widersprechen sich – bitte genau prüfen.',
     'warn.noTaxNumber': 'Keine Steuernummer gefunden – bitte Verwendungszweck prüfen.',
     'warn.noRecipientName': 'Kein Empfängername gefunden – bitte manuell eintragen.',
+    ibanOfficial: 'Offizielles Finanzamt-Konto',
+    ibanOfficeMismatch:
+      'Offizielles Finanzamt-Konto, aber die Steuernummer im Verwendungszweck gehört zu einer anderen Dienststelle – bitte prüfen',
+    ibanUnknown:
+      'Achtung: laut BMF-Verzeichnis kein offizielles Finanzamt-Konto – IBAN genau prüfen!',
     qrTitle: 'Mit Banking-App scannen',
     qrInvalid: 'QR-Code erscheint, sobald alle Felder gültig sind.',
     download: 'PNG speichern',
@@ -80,6 +85,11 @@ const STRINGS = {
     'warn.amountMismatch': 'The amounts on the slip contradict each other – please double-check.',
     'warn.noTaxNumber': 'No tax number found – please check the payment reference.',
     'warn.noRecipientName': 'No recipient name found – please enter it manually.',
+    ibanOfficial: 'Official Finanzamt account',
+    ibanOfficeMismatch:
+      'Official Finanzamt account, but the tax number in the payment reference belongs to a different office – please double-check',
+    ibanUnknown:
+      'Warning: not an official Finanzamt account per the BMF directory – verify the IBAN carefully!',
     qrTitle: 'Scan with your banking app',
     qrInvalid: 'The QR code appears once all fields are valid.',
     download: 'Save PNG',
