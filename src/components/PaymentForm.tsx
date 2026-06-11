@@ -9,10 +9,13 @@ export interface FormValues {
   remittance: string
 }
 
+export type IbanCheck = { tone: 'ok' | 'warn' | 'alert'; text: string } | null
+
 interface Props {
   values: FormValues
   errors: EpcErrors
   onChange: (values: FormValues) => void
+  ibanCheck?: IbanCheck
 }
 
 const ERROR_KEYS: Record<string, StringKey> = {
@@ -26,7 +29,7 @@ const ERROR_KEYS: Record<string, StringKey> = {
   'remittance.tooLong': 'errRemittanceLong',
 }
 
-export function PaymentForm({ values, errors, onChange }: Props) {
+export function PaymentForm({ values, errors, onChange, ibanCheck }: Props) {
   const { t } = useI18n()
 
   const set = (field: keyof FormValues) => (value: string) =>
@@ -46,14 +49,30 @@ export function PaymentForm({ values, errors, onChange }: Props) {
         error={errorText('name')}
         maxLength={70}
       />
-      <Field
-        label={t('fieldIban')}
-        value={values.iban}
-        onChange={set('iban')}
-        error={errorText('iban')}
-        mono
-        placeholder="AT.. .... .... .... ...."
-      />
+      <div className="flex flex-col gap-1.5">
+        <Field
+          label={t('fieldIban')}
+          value={values.iban}
+          onChange={set('iban')}
+          error={errorText('iban')}
+          mono
+          placeholder="AT.. .... .... .... ...."
+        />
+        {ibanCheck && !errorText('iban') && (
+          <p
+            className={`flex items-start gap-1.5 text-xs font-medium ${
+              ibanCheck.tone === 'ok'
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : ibanCheck.tone === 'warn'
+                  ? 'text-amber-600 dark:text-amber-400'
+                  : 'text-red-600 dark:text-red-400'
+            }`}
+          >
+            <span aria-hidden>{ibanCheck.tone === 'ok' ? '✓' : '⚠'}</span>
+            {ibanCheck.text}
+          </p>
+        )}
+      </div>
       <div className="grid grid-cols-2 gap-4">
         <Field
           label={t('fieldBic')}

@@ -5,7 +5,9 @@ import { QrPanel } from './components/QrPanel'
 import { useI18n, type StringKey } from './i18n'
 import { buildEpcPayload, validateEpc, type EpcInput } from './lib/epc'
 import { parseAmountToCents, centsToDisplay } from './lib/amount'
-import { formatIban } from './lib/iban'
+import { formatIban, isValidIban } from './lib/iban'
+import { findFinanzamtAccount, officeFromRemittance } from './lib/finanzamtAccounts'
+import type { IbanCheck } from './components/PaymentForm'
 import { extractTextItems } from './lib/pdf'
 import { parsePayment, reconstructLines, type ParseWarning } from './lib/parser'
 
@@ -63,6 +65,19 @@ export default function App() {
       payload: Object.keys(errors).length === 0 ? buildEpcPayload(epcInput) : null,
     }
   }, [values])
+
+  // Offline payee verification against the official BMF account directory
+  const ibanCheck: IbanCheck = useMemo(() => {
+    if (!isValidIban(values.iban)) return null
+    const account = findFinanzamtAccount(values.iban)
+    if (!account) return { tone: 'alert', text: t('ibanUnknown') }
+    const office = officeFromRemittance(values.remittance)
+    if (office && office !== account.office) {
+      return { tone: 'warn', text: `${t('ibanOfficeMismatch')} (${account.name})` }
+    }
+    return { tone: 'ok', text: `${t('ibanOfficial')}: ${account.name}` }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- t is stable per lang
+  }, [values.iban, values.remittance, lang])
 
   const summary = `${values.name} · ${values.iban} · € ${values.amount}`
 
@@ -130,7 +145,12 @@ export default function App() {
 
             <div className="grid gap-8 md:grid-cols-[1fr_auto]">
               <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                <PaymentForm values={values} errors={errors} onChange={setValues} />
+                <PaymentForm
+                  values={values}
+                  errors={errors}
+                  onChange={setValues}
+                  ibanCheck={ibanCheck}
+                />
               </section>
               <section className="flex flex-col items-center justify-center md:w-80">
                 <h2 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-300">

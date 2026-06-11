@@ -69,6 +69,9 @@ npm run preview  # Build lokal serven
   `src/lib/taxCodes.ts` aus dem offiziellen BMF
   "Verzeichnis der Abgabenarten" (bmf.gv.at) – aktuell 187 Codes inkl.
   Zeitraumformat (MM/JJJJ, KVJ, JJJJ, …).
+- `node scripts/generate-finanzamt-accounts.mjs` regeneriert
+  `src/lib/finanzamtAccounts.ts` aus der offiziellen BMF-Liste der
+  Finanzamtskonten (Seite "Steuerzahlungen") – aktuell 36 Konten.
 
 ## Wie es funktioniert
 
@@ -90,7 +93,14 @@ npm run preview  # Build lokal serven
    (`StNr. … / U 04/2026`) zurück. Hinweis: Die SEPA-End-to-End-Referenz, in
    der die Steuernummer bei nativen Finanzamtszahlungen zusätzlich reist, ist
    per EPC-QR-Code nicht setzbar.
-3. **Editierbares Formular:** Alle erkannten Werte lassen sich vor dem
+3. **Offline-Empfängerprüfung** (`src/lib/finanzamtAccounts.ts`): Die IBAN
+   wird gegen das offizielle BMF-Verzeichnis aller Finanzamtskonten geprüft –
+   lokal, ohne Netzwerk. Grün: offizielles Konto, dessen Dienststelle zur
+   Steuernummer passt. Gelb: offizielles Konto, aber andere Dienststelle.
+   Rot: keine bekannte Finanzamt-IBAN (z. B. bei einer manipulierten PDF).
+   Die finale Name/IBAN-Prüfung (Verification of Payee) macht zusätzlich
+   deine Bank beim Absenden.
+4. **Editierbares Formular:** Alle erkannten Werte lassen sich vor dem
    Scannen prüfen und korrigieren. Bei Unklarheiten warnt die App, statt
    stillschweigend zu raten.
 
