@@ -72,6 +72,11 @@ const BIC_SQUASHED_RE = /(?<![A-Z])[A-Z]{4}AT[A-Z0-9]{2}(?:[A-Z0-9]{3})?(?![A-Z]
 // thousands separator.
 const TAX_LINE_RE =
   /\b([A-Z]{1,3})\s+(\d{2}-\d{2}\/?\d{4}|\d{6}|(?:19|20)\d{2})\b(?:\s+((?:\d{1,3}(?:\.\d{3})+|\d+),\d{2}))?/g
+// Benachrichtigung letters (e.g. Einkommensteuer-Vorauszahlung) have no tax
+// table – the data sits in the electronic-payment hint: "… die Abgabenart E,
+// den Zeitraum 07092026 und den Betrag € 3.700,00 …" (wraps across lines).
+const HINT_RE =
+  /Abgabenart\s+([A-Z]{1,3}),?\s+den\s+Zeitraum\s+(\d{4}|\d{6}|\d{8})\s+und\s+den\s+Betrag\s+€?\s*((?:\d{1,3}(?:\.\d{3})+|\d+),\d{2})/g
 const AMOUNT_RE = /(?<![\d,.])((?:\d{1,3}(?:\.\d{3})+|\d+),\d{2})(?![\d,])/g
 /** OCR control line at the bottom of the slip, amount in cents: "00000136500<" */
 const CONTROL_RE = /(?<!\d[,.])0*(\d{1,12})</
@@ -93,7 +98,7 @@ export function parsePayment(lines: string[]): ParsedPayment {
   if (!recipientName) warnings.push('noRecipientName')
 
   const taxNumber = lines
-    .map((l) => /StNr\.?:?\s*(\d{2}\s?\d{3}\/\d{4})/.exec(l)?.[1])
+    .map((l) => /(?:StNr\.?|Steuernummer):?\s*(\d{2}\s?\d{3}\/\d{4})/.exec(l)?.[1])
     .find(Boolean)
   if (!taxNumber) warnings.push('noTaxNumber')
 
@@ -115,21 +120,27 @@ export function parsePayment(lines: string[]): ParsedPayment {
 /**
  * Prefers the machine-readable "Finanzamtszahlung" remittance grammar that
  * banks themselves write for tax payments – tax number, then one segment of
- * YYMM+amount-in-cents+tax-code per position (e.g. "123456789 2604+136500U").
- * Banking apps like George parse it back into labelled positions. Falls back
- * to a human-readable form when any piece needed for the grammar is missing.
+ * period+amount-in-cents+tax-code per position. Periods per the PSA/STUZZA
+ * grammar: YYMM for a month ("2604+136500U"), YYMM/MM for month ranges such
+ * as quarterly Einkommensteuer prepayments ("2607/09+370000E"). Banking apps
+ * like George parse it back into labelled positions. Falls back to a
+ * human-readable form when any piece needed for the grammar is missing.
  */
 function buildRemittance(taxNumber: string | undefined, taxItems: TaxItem[]): string | undefined {
+  const toSegmentPeriod = (period: string): string | undefined => {
+    const month = /^(\d{2})(\d{4})$/.exec(period)
+    if (month) return `${month[2].slice(2)}${month[1]}`
+    const range = /^(\d{2})-(\d{2})\/?(\d{4})$/.exec(period)
+    if (range) return `${range[3].slice(2)}${range[1]}/${range[2]}`
+    return undefined
+  }
   const structured =
     taxNumber &&
     taxItems.length > 0 &&
-    taxItems.every((i) => i.amountCents !== undefined && /^\d{2}\d{4}$/.test(i.period))
+    taxItems.every((i) => i.amountCents !== undefined && toSegmentPeriod(i.period) !== undefined)
   if (structured) {
     const stnr = taxNumber.replace(/[\s/]/g, '')
-    const segments = taxItems.map((i) => {
-      const [, mm, yyyy] = /^(\d{2})(\d{4})$/.exec(i.period)!
-      return `${yyyy.slice(2)}${mm}+${i.amountCents}${i.code}`
-    })
+    const segments = taxItems.map((i) => `${toSegmentPeriod(i.period)}+${i.amountCents}${i.code}`)
     return [stnr, ...segments].join(' ')
   }
 
@@ -202,6 +213,9 @@ function findRecipientName(lines: string[], recipientIban?: string): string | un
   const dienststelle = lines.find((l) => squash(l).includes('DIENSTSTELLE'))
   if (dienststelle) return dedupeColumns(dienststelle)
 
+  // Benachrichtigung letters name no Dienststelle – the sender is the payee
+  if (lines.some((l) => l.includes('Finanzamt Österreich'))) return 'Finanzamt Österreich'
+
   // fallback: the line right above the recipient IBAN
   if (recipientIban) {
     const idx = lines.findIndex((l) => squash(l).includes(recipientIban))
@@ -223,21 +237,51 @@ function dedupeColumns(line: string): string {
 
 function findTaxItems(lines: string[]): TaxItem[] {
   const seen = new Map<string, TaxItem>()
+  const add = (code: string, period: string, amount?: string) => {
+    if (!isKnownTaxCode(code)) return
+    const key = `${code} ${period}`
+    const amountCents = amount ? (parseAmountToCents(amount) ?? undefined) : undefined
+    const existing = seen.get(key)
+    if (!existing) seen.set(key, { code, period, amountCents })
+    else if (existing.amountCents === undefined) existing.amountCents = amountCents
+  }
+
   for (const line of lines) {
     for (const m of line.matchAll(TAX_LINE_RE)) {
       const [, code, period, amount] = m
-      if (!isKnownTaxCode(code)) continue
       // 6-digit periods are MMJJJJ – reject impossible months ("136500" etc.)
       const month = /^(\d{2})\d{4}$/.exec(period)?.[1]
       if (month !== undefined && (Number(month) < 1 || Number(month) > 12)) continue
-      const key = `${code} ${period}`
-      const amountCents = amount ? (parseAmountToCents(amount) ?? undefined) : undefined
-      const existing = seen.get(key)
-      if (!existing) seen.set(key, { code, period, amountCents })
-      else if (existing.amountCents === undefined) existing.amountCents = amountCents
+      add(code, period, amount)
     }
   }
+
+  // the electronic-payment hint wraps across lines – match on the joined text
+  for (const m of lines.join(' ').matchAll(HINT_RE)) {
+    const [, code, rawPeriod, amount] = m
+    const period = normalizeHintPeriod(rawPeriod)
+    if (period !== undefined) add(code, period, amount)
+  }
+
   return [...seen.values()]
+}
+
+/**
+ * Periods in the electronic-payment hint are digits only: "042026" (MMJJJJ),
+ * "07092026" (MMMMJJJJ month range, e.g. a quarter), or "2026" (JJJJ).
+ * Normalizes to the same shapes TAX_LINE_RE produces ("07-092026").
+ */
+function normalizeHintPeriod(raw: string): string | undefined {
+  const validMonth = (mm: string) => Number(mm) >= 1 && Number(mm) <= 12
+  const range = /^(\d{2})(\d{2})(\d{4})$/.exec(raw)
+  if (range) {
+    const [, from, to, yyyy] = range
+    if (!validMonth(from) || !validMonth(to) || Number(from) > Number(to)) return undefined
+    return `${from}-${to}${yyyy}`
+  }
+  const month = /^(\d{2})(\d{4})$/.exec(raw)
+  if (month) return validMonth(month[1]) ? raw : undefined
+  return /^(?:19|20)\d{2}$/.test(raw) ? raw : undefined
 }
 
 function findAmount(

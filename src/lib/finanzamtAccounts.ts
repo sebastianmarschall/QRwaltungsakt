@@ -55,7 +55,7 @@ export function findFinanzamtAccount(iban: string): FinanzamtAccount | undefined
   return BY_IBAN.get(normalizeIban(iban))
 }
 
-/** "08 345/6789" or "123456789 2604+…" → Dienststellen number "08". */
+/** "12 345/6789" or "123456789 2604+…" → Dienststellen number "12". */
 export function officeFromRemittance(remittance: string): string | undefined {
   const m = /(?:StNr\.?:?\s*|^\s*)(\d{2})[\s-]?\d{3}\/?\d{4}\b/.exec(remittance)
   return m?.[1]

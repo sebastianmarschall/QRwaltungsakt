@@ -75,19 +75,26 @@ npm run preview  # Build lokal serven
 
 ## Wie es funktioniert
 
-1. **PDF-Parsing** (`src/lib/pdf.ts`, `src/lib/parser.ts`): Der Text-Layer der
-   Zahlscheine ist stark fragmentiert (IBANs in 4er-Blöcken, Beträge als
-   einzelne Glyphen in Rechts-nach-links-Reihenfolge). Der Parser
-   rekonstruiert Zeilen über die Glyph-Koordinaten und erkennt dann
-   Empfänger-IBAN (die mit BIC `BUNDATWWXXX` bzw. BAWAG-P.S.K.-BLZ `01000` –
-   nicht die eigene IBAN, die ebenfalls am Zahlschein steht!), Steuernummer,
-   Abgabenart (`U` = Umsatzsteuer, …), Zeitraum und Betrag inkl. Quervergleich
-   mit der OCR-Kontrollzeile.
+1. **PDF-Parsing** (`src/lib/pdf.ts`, `src/lib/parser.ts`): Unterstützt beide
+   Dokumenttypen des Finanzamts – die **Zahlungsanweisung** (Zahlschein) und
+   die **Benachrichtigung** über Vorauszahlungen (z. B. vierteljährliche
+   Einkommensteuer). Der Text-Layer der Zahlscheine ist stark fragmentiert
+   (IBANs in 4er-Blöcken, Beträge als einzelne Glyphen in
+   Rechts-nach-links-Reihenfolge). Der Parser rekonstruiert Zeilen über die
+   Glyph-Koordinaten und erkennt dann Empfänger-IBAN (die mit BIC
+   `BUNDATWWXXX` bzw. BAWAG-P.S.K.-BLZ `01000` – nicht die eigene IBAN, die
+   ebenfalls am Zahlschein steht!), Steuernummer, Abgabenart
+   (`U` = Umsatzsteuer, `E` = Einkommensteuer, …), Zeitraum und Betrag inkl.
+   Quervergleich mit der OCR-Kontrollzeile. Bei Benachrichtigungen, die keine
+   Abgabentabelle haben, liest er stattdessen den Hinweis für elektronische
+   Zahlungen ("… die Abgabenart E, den Zeitraum 07092026 und den Betrag …").
 2. **EPC-Payload** (`src/lib/epc.ts`): Version 002, UTF-8, Fehlerkorrektur M.
    Der Verwendungszweck nutzt die maschinenlesbare
-   Finanzamtszahlungs-Grammatik – Steuernummer, dann pro Position
-   `JJMM+Betrag in Cent+Abgabenart` (z. B. `123456789 2604+136500U`), wie sie
-   Banken bei echten Finanzamtszahlungen selbst schreiben. Banking-Apps wie
+   Finanzamtszahlungs-Grammatik (PSA/STUZZA) – Steuernummer, dann pro Position
+   `Zeitraum+Betrag in Cent+Abgabenart`, mit `JJMM` für Monate
+   (z. B. `123456789 2604+136500U`) und `JJMM/MM` für Monatsbereiche wie
+   Quartale (z. B. `123456789 2607/09+370000E`), wie sie Banken bei echten
+   Finanzamtszahlungen selbst schreiben. Banking-Apps wie
    George parsen das zurück in benannte Positionen ("Umsatzsteuer (U) …").
    Fehlt eine Angabe dafür, fällt QRwaltungsakt auf die menschenlesbare Form
    (`StNr. … / U 04/2026`) zurück. Hinweis: Die SEPA-End-to-End-Referenz, in

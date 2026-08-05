@@ -2,10 +2,14 @@ import { describe, expect, it } from 'vitest'
 import { existsSync, readFileSync } from 'node:fs'
 import { parsePayment, reconstructLines, type TextItem } from './parser'
 import fixture from './__fixtures__/za-sample.json'
+import estFixture from './__fixtures__/est-sample.json'
 
 // Anonymized text items extracted from a real Finanzamt Zahlungsanweisung
 // (ZA202604) via pdf.js. Personal data replaced, structure untouched.
 const items = fixture as TextItem[]
+// Same for an Einkommensteuer-Vorauszahlung "Benachrichtigung" letter: no tax
+// table, no OCR line – the data sits in prose and the electronic-payment hint.
+const estItems = estFixture as TextItem[]
 
 describe('reconstructLines', () => {
   it('restores reading order from fragmented glyphs', () => {
@@ -51,6 +55,37 @@ describe('parsePayment', () => {
   })
 })
 
+describe('parsePayment (Einkommensteuer Benachrichtigung)', () => {
+  const result = parsePayment(reconstructLines(estItems))
+
+  it('finds IBAN and BIC from the "Unsere Bankverbindung" block', () => {
+    expect(result.recipientIban).toBe('AT360100000005504082')
+    expect(result.bic).toBe('BUNDATWW')
+  })
+
+  it('uses the sender as recipient name (letters name no Dienststelle)', () => {
+    expect(result.recipientName).toBe('Finanzamt Österreich')
+  })
+
+  it('reads the "Steuernummer:" label', () => {
+    expect(result.taxNumber).toBe('12 345/6789')
+  })
+
+  it('extracts the tax item from the electronic-payment hint', () => {
+    // "… die Abgabenart E, den Zeitraum 07092026 und den Betrag € 3.700,00 …"
+    expect(result.taxItems).toEqual([{ code: 'E', period: '07-092026', amountCents: 370000 }])
+    expect(result.amountCents).toBe(370000)
+  })
+
+  it('encodes the quarter as YYMM/MM in the structured remittance', () => {
+    expect(result.remittanceSuggestion).toBe('123456789 2607/09+370000E')
+  })
+
+  it('parses without warnings', () => {
+    expect(result.warnings).toEqual([])
+  })
+})
+
 describe('parsePayment degradation', () => {
   it('warns instead of throwing on unrelated text', () => {
     const result = parsePayment(['Hello', 'World'])
@@ -67,8 +102,21 @@ describe('parsePayment degradation', () => {
     // no YYMM grammar possible for a year-only period → human-readable fallback
     expect(yearOnly.remittanceSuggestion).toBe('StNr. 12 345/6789 / EZ 2026')
 
-    const quarter = parsePayment(['E 01-032026 300,00'])
+    const quarter = parsePayment(['StNr: 12 345/6789', 'E 01-032026 300,00'])
     expect(quarter.taxItems).toEqual([{ code: 'E', period: '01-032026', amountCents: 30000 }])
+    // month ranges are structured-capable: YYMM/MM per the PSA/STUZZA grammar
+    expect(quarter.remittanceSuggestion).toBe('123456789 2601/03+30000E')
+  })
+
+  it('rejects hint periods with impossible month ranges', () => {
+    const hint = (zeitraum: string) =>
+      parsePayment([
+        `bitte die Steuernummer 123456789 sowie die Abgabenart E, den Zeitraum ${zeitraum} und den Betrag`,
+        '€ 3.700,00 an, oder verwenden Sie die eps-Überweisung.',
+      ]).taxItems
+    expect(hint('13152026')).toEqual([])
+    expect(hint('09072026')).toEqual([]) // backwards range
+    expect(hint('07092026')).toEqual([{ code: 'E', period: '07-092026', amountCents: 370000 }])
   })
 
   it('rejects six-digit "periods" with impossible months', () => {
@@ -97,3 +145,22 @@ describe.runIf(existsSync('/tmp/items.json'))('parsePayment (real PDF, local onl
     expect(result.warnings).toEqual([])
   })
 })
+
+// Same for the Einkommensteuer Benachrichtigung (create via
+// node scripts/extract-fixture.mjs <pdf> /tmp/est-items.json).
+describe.runIf(existsSync('/tmp/est-items.json'))(
+  'parsePayment (real Einkommensteuer PDF, local only)',
+  () => {
+    it('parses the real Benachrichtigung extraction', () => {
+      const realItems = JSON.parse(readFileSync('/tmp/est-items.json', 'utf8')) as TextItem[]
+      const result = parsePayment(reconstructLines(realItems))
+      expect(result.recipientIban).toBe('AT360100000005504082')
+      expect(result.bic).toBe('BUNDATWW')
+      expect(result.recipientName).toBe('Finanzamt Österreich')
+      expect(result.amountCents).toBe(370000)
+      expect(result.taxNumber).toMatch(/^\d{2} \d{3}\/\d{4}$/)
+      expect(result.remittanceSuggestion).toMatch(/^\d{9} 2607\/09\+370000E$/)
+      expect(result.warnings).toEqual([])
+    })
+  },
+)
